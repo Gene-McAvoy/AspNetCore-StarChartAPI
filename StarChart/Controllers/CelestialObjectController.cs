@@ -17,9 +17,9 @@ namespace StarChart.Controllers
     {
         private readonly ApplicationDbContext _context;
 
-        public CelestialObjectController(ApplicationDbContext applicationDbContext)
+        public CelestialObjectController(ApplicationDbContext context)
         {
-            _context = applicationDbContext;
+            _context = context;
         }
 
         [HttpGet("{id:int}", Name ="GetByID")]
@@ -29,21 +29,64 @@ namespace StarChart.Controllers
             if (celestialObject == null)
                 return NotFound();
 
-            celestialObject.Satellites = (List<CelestialObject>)_context.CelestialObjects.Select(s => s.OrbitedObjectId == id);
+         foreach (CelestialObject c in _context.CelestialObjects)
+            {
+                if (c.OrbitedObjectId == celestialObject.Id)
+                {
+                    celestialObject.Satellites = new List<CelestialObject>();
+                    celestialObject.Satellites.Add(c);
+                }
+            }
             return Ok(celestialObject);
         }
         [HttpGet("{name}")]
         public IActionResult GetByName(string name)
         {
-            var celestialObject = _context.CelestialObjects.SingleOrDefault(s => s.Name == name);
-            if (celestialObject == null)
+            var celestialObject = from c in _context.CelestialObjects
+                                  where c.Name == name
+                                  orderby c.Name
+                                  select c;
+
+            if (celestialObject.Count<CelestialObject>() == 0)
                 return NotFound();
-            celestialObject.Satellites = (List<CelestialObject>)_context.CelestialObjects.Select(s => s.OrbitedObjectId == celestialObject.Id);
+
+            foreach (CelestialObject c in celestialObject)
+            {
+                foreach (CelestialObject co in _context.CelestialObjects)
+                {
+                    if (co.OrbitedObjectId == c.Id)
+                    {
+                        if (c.Satellites == null)
+                        {
+                            c.Satellites = new List<CelestialObject>();
+                            c.Satellites.Add(co);
+                        }
+                        else
+                            c.Satellites.Add(co);
+                    }
+                }
+            }
             return Ok(celestialObject);
         }
         [HttpGet]
         public IActionResult GetAll()
         {
+            foreach(CelestialObject c in _context.CelestialObjects)
+            {
+                foreach (CelestialObject co in _context.CelestialObjects)
+                {
+                    if (co.OrbitedObjectId == c.Id)
+                    {
+                        if (c.Satellites == null)
+                        {
+                            c.Satellites = new List<CelestialObject>();
+                            c.Satellites.Add(co);
+                        }
+                        else
+                            c.Satellites.Add(co);
+                    }
+                }
+            }
             return Ok(_context.CelestialObjects);
         }
     }
