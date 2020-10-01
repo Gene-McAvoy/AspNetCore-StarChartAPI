@@ -40,7 +40,11 @@ namespace StarChart.Controllers
                 return NotFound();
             celestialObject.Satellites = (List<CelestialObject>)_context.CelestialObjects.Select(s => s.OrbitedObjectId == celestialObject.Id);
             return Ok(celestialObject);
-
+        }
+        [HttpGet]
+        public IActionResult GetAll()
+        {
+            return Ok(_context.CelestialObjects);
         }
     }
 }
